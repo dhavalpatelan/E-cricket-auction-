@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>E-Cricket Auction App</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-2: #334155;
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --accent: #3b82f6;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 80px; }
+    
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #064e3b, #0f172a);
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    header h1 { font-size: 1.15rem; font-weight: 700; color: #34d399; }
+    header small { display: block; font-size: 0.75rem; color: var(--muted); }
+
+    /* Navigation Tabs */
+    nav {
+      display: flex; background: var(--card); border-bottom: 1px solid var(--border);
+      position: sticky; top: 58px; z-index: 99; overflow-x: auto;
+    }
+    nav button {
+      flex: 1; padding: 12px 8px; background: none; border: none; color: var(--muted);
+      font-weight: 600; font-size: 0.85rem; cursor: pointer; white-space: nowrap;
+      border-bottom: 3px solid transparent;
+    }
+    nav button.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(16,185,129,0.08); }
+
+    /* Layout & Cards */
+    .container { max-width: 800px; margin: 0 auto; padding: 14px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px; margin-bottom: 14px;
+    }
+    .card h2 { font-size: 1rem; margin-bottom: 12px; color: #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Forms */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 10px; }
+    label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea {
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font-size: 0.9rem;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 14px; border: none; border-radius: 8px; font-weight: 600;
+      font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 6px; transition: 0.15s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: #022c22; }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-warning { background: var(--warning); color: #1e1b4b; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-sm { padding: 6px 10px; font-size: 0.78rem; }
+    .btn-block { width: 100%; }
+
+    /* Badges & Stats */
+    .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
+    .stat-box span { display: block; font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+    .stat-box small { font-size: 0.7rem; color: var(--muted); }
+
+    /* Avatars & Logos */
+    .avatar {
+      width: 44px; height: 44px; border-radius: 50%; object-fit: cover;
+      background: var(--card-2); display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: var(--primary); flex-shrink: 0; border: 1px solid var(--border);
+    }
+    .avatar-lg { width: 90px; height: 90px; font-size: 2rem; margin: 0 auto 10px; }
+
+    /* Lists */
+    .list-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .list-item:last-child { border-bottom: none; }
+    .item-info { flex: 1; min-width: 0; }
+    .item-info h4 { font-size: 0.92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .item-info p { font-size: 0.76rem; color: var(--muted); }
+
+    /* Auction Stage */
+    .auction-stage {
+      text-align: center; background: linear-gradient(180deg, #1e293b, #0f172a);
+      border: 2px solid var(--primary); border-radius: 16px; padding: 18px; margin-bottom: 14px;
+    }
+    .timer-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 700;
+      background: rgba(245,158,11,0.15); color: var(--warning); margin-bottom: 10px; font-size: 0.9rem;
+    }
+    .timer-badge.danger { background: rgba(239,68,68,0.2); color: var(--danger); }
+    .bid-display { font-size: 1.8rem; font-weight: 800; color: #34d399; margin: 8px 0; }
+    .bid-increments { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+    .team-bid-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+    .team-bid-btn {
+      background: var(--card-2); border: 1px solid var(--border); color: var(--text);
+      padding: 10px; border-radius: 10px; text-align: left; cursor: pointer;
+    }
+    .team-bid-btn.selected { border-color: var(--primary); background: rgba(16,185,129,0.2); }
+    .team-bid-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Modal */
+    .modal {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      z-index: 200; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal.open { display: flex; }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      width: 100%; max-width: 440px; padding: 18px; max-height: 90vh; overflow-y: auto;
+    }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600;
+    }
+    .pill-sold { background: rgba(16,185,129,0.2); color: #34d399; }
+    .pill-unsold { background: rgba(239,68,68,0.2); color: #f87171; }
+    .pill-icon { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .pill-avail { background: rgba(59,130,246,0.2); color: #60a5fa; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 id="headerTitle">E-Cricket Auction</h1>
+    <small id="headerSub">Tournament Auction Manager</small>
+  </div>
+  <button class="btn btn-outline btn-sm" onclick="resetAllData()">Reset All</button>
+</header>
+
+<nav id="mainNav">
+  <button class="active" onclick="switchTab('auction')">🏏 Auction</button>
+  <button onclick="switchTab('players')">🏃 Players</button>
+  <button onclick="switchTab('teams')">🛡️ Teams</button>
+  <button onclick="switchTab('settings')">⚙️ Settings</button>
+</nav>
+
+<div class="container">
+
+  <!-- ==================== 1. LIVE AUCTION TAB ==================== -->
+  <div id="tab-auction" class="tab-content active">
+    <div class="stats-bar">
+      <div class="stat-box"><span id="statTotal">0</span><small>Total</small></div>
+      <div class="stat-box"><span id="statRemaining">0</span><small>Remaining</small></div>
+      <div class="stat-box"><span id="statSold">0</span><small>Sold</small></div>
+      <div class="stat-box"><span id="statUnsold">0</span><small>Unsold</small></div>
+    </div>
+
+    <div id="auctionStage" class="auction-stage">
+      <!-- Dynamic Auction Content -->
+    </div>
+
+    <!-- Unsold Players Quick Recall -->
+    <div class="card">
+      <h2>
+        <span>Unsold Players (<span id="unsoldListCount">0</span>)</span>
+        <button class="btn btn-warning btn-sm" onclick="recallAllUnsold()">Bring All Back</button>
+      </h2>
+      <div id="unsoldPlayersList"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. PLAYERS TAB ==================== -->
+  <div id="tab-players" class="tab-content">
+    <!-- Self Registration Share Link -->
+    <div class="card">
+      <h2>📲 Player Self-Registration Link</h2>
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">
+        Share this link on WhatsApp so players can register themselves with their photo. If hosted online, players can send their registration directly to your WhatsApp!
+      </p>
+      <div style="display:flex; gap:8px; margin-bottom:10px;">
+        <input type="text" id="regLinkInput" readonly />
+        <button class="btn btn-accent" onclick="copyRegLink()">Copy</button>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary btn-block" onclick="shareRegLinkWhatsApp()">Share Link on WhatsApp</button>
+        <button class="btn btn-outline btn-block" onclick="openSelfRegPreview()">Open Form</button>
+      </div>
+
+      <!-- Quick Import from WhatsApp -->
+      <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
+        <label>📥 Paste Player WhatsApp Registration Code to Import:</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="importCodeInput" placeholder="Paste code received on WhatsApp..." />
+          <button class="btn btn-primary" onclick="importPlayerCode()">Import</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Player Registration -->
+    <div class="card">
+      <h2>➕ Add Player Manually</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Player Name *</label>
+          <input type="text" id="pName" placeholder="e.g. Rohit Sharma" />
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="pRole">
+            <option value="All-Rounder">All-Rounder</option>
+            <option value="Batsman">Batsman</option>
+            <option value="Bowler">Bowler</option>
+            <option value="Wicket-Keeper">Wicket-Keeper</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Base Price (Points)</label>
+          <input type="number" id="pBase" value="5000" min="0" step="500" />
+        </div>
+        <div class="form-group">
+          <label>Mobile / Age (Optional)</label>
+          <input type="text" id="pMobile" placeholder="e.g. 9876543210" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Player Photo (Optional)</label>
+        <input type="file" id="pPhoto" accept="image/*" />
+      </div>
+      <button class="btn btn-primary btn-block" onclick="addManualPlayer()">Save Player</button>
+    </div>
+
+    <!-- All Players List -->
+    <div class="card">
+      <h2>📋 Registered Players (<span id="allPlayersCount">0</span>)</h2>
+      <div id="allPlayersList"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 3. TEAMS & ICON PLAYERS TAB ==================== -->
+  <div id="tab-teams" class="tab-content">
+    <div id="teamsContainer"></div>
+  </div>
+
+  <!-- ==================== 4. SETTINGS TAB ==================== -->
+  <div id="tab-settings" class="tab-content">
+    <div class="card">
+      <h2>⚙️ Tournament Settings</h2>
+      <div class="form-group">
+        <label>Tournament Name</label>
+        <input type="text" id="setTourneyName" />
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Number of Teams (3 to 10)</label>
+          <input type="number" id="setTeamCount" min="3" max="10" />
+        </div>
+        <div class="form-group">
+          <label>Team Budget / Purse (₹1L to ₹1Cr)</label>
+          <input type="number" id="setBudget" min="100000" max="10000000" step="50000" />
+        </div>
+        <div class="form-group">
+          <label>Min Players per Team (5 to 20)</label>
+          <input type="number" id="setMinPlayers" min="5" max="20" />
+        </div>
+        <div class="form-group">
+          <label>Max Players per Team (5 to 30)</label>
+          <input type="number" id="setMaxPlayers" min="5" max="30" />
+        </div>
+        <div class="form-group">
+          <label>Bid Timer in Seconds (0 = Timer OFF)</label>
+          <input type="number" id="setBidTime" min="0" max="300" />
+        </div>
+        <div class="form-group">
+          <label>Default Bid Increment</label>
+          <input type="number" id="setIncrement" min="100" step="100" />
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== ICON PLAYER MODAL ==================== -->
+<div id="iconModal" class="modal">
+  <div class="modal-box">
+    <h3 style="margin-bottom:10px;">⭐ Assign Icon Player</h3>
+    <p id="iconModalTeamName" style="font-size:0.85rem; color:var(--primary); margin-bottom:12px;"></p>
+    <div class="form-group">
+      <label>Select Player (or type new name below)</label>
+      <select id="iconExistingSelect" onchange="toggleNewIconFields()">
+        <option value="">-- Add New Icon Player --</option>
+      </select>
+    </div>
+    <div id="newIconFields">
+      <div class="form-group">
+        <label>Icon Player Name *</label>
+        <input type="text" id="iconNewName" placeholder="Enter Icon Player Name" />
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="iconNewRole">
+          <option value="All-Rounder">All-Rounder</option>
+          <option value="Batsman">Batsman</option>
+          <option value="Bowler">Bowler</option>
+          <option value="Wicket-Keeper">Wicket-Keeper</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Photo (Optional)</label>
+        <input type="file" id="iconNewPhoto" accept="image/*" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Points to Deduct from Team Purse *</label>
+      <input type="number" id="iconPointsInput" placeholder="e.g. 20000" min="0" step="500" />
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-primary btn-block" onclick="confirmIconPlayer()">Add Icon Player</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('iconModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EDIT TEAM MODAL ==================== -->
+<div id="editTeamModal" class="modal">
+  <div class="modal-box">
+    <h3 style="margin-bottom:12px;">✏️ Edit Team Details</h3>
+    <div class="form-group">
+      <label>Team Name</label>
+      <input type="text" id="editTeamNameInput" />
+    </div>
+    <div class="form-group">
+      <label>Owner / Captain WhatsApp Number (with country code, e.g. 919876543210)</label>
+      <input type="text" id="editTeamPhoneInput" placeholder="919876543210" />
+    </div>
+    <div class="form-group">
+      <label>Team Logo (Optional)</label>
+      <input type="file" id="editTeamLogoInput" accept="image/*" />
+    </div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button class="btn btn-primary btn-block" onclick="saveTeamEdit()">Save Team</button>
+      <button class="btn btn-outline btn-block" onclick="closeModal('editTeamModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SELF REGISTRATION MODAL/VIEW ==================== -->
+<div id="selfRegModal" class="modal">
+  <div class="modal-box">
+    <h3 style="margin-bottom:6px;">🏏 Player Self-Registration</h3>
+    <p id="selfRegTourneyTitle" style="font-size:0.82rem; color:var(--primary); margin-bottom:12px;"></p>
+    <div class="form-group">
+      <label>Your Full Name *</label>
+      <input type="text" id="srName" placeholder="Enter your full name" />
+    </div>
+    <div class="form-group">
+      <label>Playing Role *</label>
+      <select id="srRole">
+        <option value="All-Rounder">All-Rounder</option>
+        <option value="Batsman">Batsman</option>
+        <option value="Bowler">Bowler</option>
+        <option value="Wicket-Keeper">Wicket-Keeper</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Mobile Number *</label>
+      <input type="tel" id="srMobile" placeholder="e.g. 9876543210" />
+    </div>
+    <div class="form-group">
+      <label>Your Photo (Optional)</label>
+      <input type="file" id="srPhoto" accept="image/*" />
+    </div>
+    <button class="btn btn-primary btn-block" style="margin-bottom:8px;" onclick="submitSelfReg('whatsapp')">
+      📲 Register & Send on WhatsApp
+    </button>
+    <button class="btn btn-accent btn-block" style="margin-bottom:8px;" onclick="submitSelfReg('local')">
+      💾 Save Directly to This Device
+    </button>
+    <button class="btn btn-outline btn-block" onclick="closeSelfReg()">Close</button>
+  </div>
+</div>
+
+<script>
+  // ==================== STATE MANAGEMENT ====================
+  const DEFAULT_STATE = {
+    settings: {
+      tourneyName: "Premier Cricket League 2026",
+      teamCount: 4,
+      minPlayers: 7,
+      maxPlayers: 15,
+      budget: 500000, // 5 Lakh
+      bidTime: 30,    // 0 = Off
+      increment: 2000
+    },
+    teams: [],
+    players: [], // { id, name, role, basePrice, mobile, photo, status: 'available'|'sold'|'unsold'|'icon', soldTo: teamId, soldPrice: number }
+    currentAuction: {
+      playerId: null,
+      currentBid: 0,
+      highestBidderId: null
+    }
+  };
+
+  let state = JSON.parse(localStorage.getItem('ecricket_auction_v1')) || DEFAULT_STATE;
+  let timerInterval = null;
+  let timeLeft = 0;
+  let activeTeamIdForModal = null;
+
+  function saveState() {
+    localStorage.setItem('ecricket_auction_v1', JSON.stringify(state));
+  }
+
+  function initTeamsIfNeeded() {
+    const count = state.settings.teamCount;
+    if (state.teams.length !== count) {
+      const updated = [];
+      for (let i = 0; i < count; i++) {
+        if (state.teams[i]) {
+          updated.push(state.teams[i]);
+        } else {
+          updated.push({
+            id: 'team_' + (i + 1) + '_' + Date.now(),
+            name: `Team ${i + 1}`,
+            logo: '',
+            ownerPhone: ''
+          });
+        }
+      }
+      state.teams = updated;
+      saveState();
+    }
+  }
+
+  // Compress image to Base64 so localStorage never overflows
+  function compressImage(file, maxSize = 160) {
+    return new Promise((resolve) => {
+      if (!file) return resolve('');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > h) { if (w > maxSize) { h *= maxSize / w; w = maxSize; } }
+          else { if (h > maxSize) { w *= maxSize / h; h = maxSize; } }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function formatPts(num) {
+    return '₹' + Number(num || 0).toLocaleString('en-IN');
+  }
+
+  function getTeamStats(teamId) {
+    const roster = state.players.filter(p => (p.status === 'sold' || p.status === 'icon') && p.soldTo === teamId);
+    const spent = roster.reduce((sum, p) => sum + Number(p.soldPrice || 0), 0);
+    const remaining = state.settings.budget - spent;
+    return { roster, spent, remaining, count: roster.length };
+  }
+
+  // ==================== NAVIGATION ====================
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('#mainNav button').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.add('active');
+    event.target.classList.add('active');
+    renderAll();
+  }
+
+  // ==================== SETTINGS ====================
+  function loadSettingsForm() {
+    document.getElementById('setTourneyName').value = state.settings.tourneyName;
+    document.getElementById('setTeamCount').value = state.settings.teamCount;
+    document.getElementById('setBudget').value = state.settings.budget;
+    document.getElementById('setMinPlayers').value = state.settings.minPlayers;
+    document.getElementById('setMaxPlayers').value = state.settings.maxPlayers;
+    document.getElementById('setBidTime').value = state.settings.bidTime;
+    document.getElementById('setIncrement').value = state.settings.increment;
+  }
+
+  function saveSettings() {
+    const tCount = Math.min(10, Math.max(3, parseInt(document.getElementById('setTeamCount').value) || 4));
+    const minP = Math.min(20, Math.max(5, parseInt(document.getElementById('setMinPlayers').value) || 7));
+    const maxP = Math.min(30, Math.max(5, parseInt(document.getElementById('setMaxPlayers').value) || 15));
+    const budget = Math.min(10000000, Math.max(100000, parseInt(document.getElementById('setBudget').value) || 500000));
+    const bidTime = Math.max(0, parseInt(document.getElementById('setBidTime').value) || 0);
+    const increment = Math.max(100, parseInt(document.getElementById('setIncrement').value) || 2000);
+
+    if (minP > maxP) return alert("Min players cannot be greater than Max players!");
+
+    state.settings = {
+      tourneyName: document.getElementById('setTourneyName').value.trim() || "Cricket Auction",
+      teamCount: tCount,
+      minPlayers: minP,
+      maxPlayers: maxP,
+      budget: budget,
+      bidTime: bidTime,
+      increment: increment
+    };
+    initTeamsIfNeeded();
+    saveState();
+    renderAll();
+    alert("Settings saved!");
+  }
+
+  // ==================== PLAYERS & REGISTRATION ====================
+  async function addManualPlayer() {
+    const name = document.getElementById('pName').value.trim();
+    if (!name) return alert("Please enter player name");
+    const role = document.getElementById('pRole').value;
+    const basePrice = parseInt(document.getElementById('pBase').value) || 5000;
+    const mobile = document.getElementById('pMobile').value.trim();
+    const photoFile = document.getElementById('pPhoto').files[0];
+    const photo = await compressImage(photoFile);
+
+    state.players.push({
+      id: 'p_' + Date.now(),
+      name, role, basePrice, mobile, photo,
+      status: 'available',
+      soldTo: null,
+      soldPrice: 0
+    });
+
+    document.getElementById('pName').value = '';
+    document.getElementById('pMobile').value = '';
+    document.getElementById('pPhoto').value = '';
+    saveState();
+    renderAll();
+  }
+
+  function deletePlayer(id) {
+    if (!confirm("Delete this player?")) return;
+    if (state.currentAuction.playerId === id) {
+      state.currentAuction = { playerId: null, currentBid: 0, highestBidderId: null };
+    }
+    state.players = state.players.filter(p => p.id !== id);
+    saveState();
+    renderAll();
+  }
+
+  function getShareableRegUrl() {
+    const url = new URL(window.location.href);
+    url.searchParams.set('register', '1');
+    url.searchParams.set('t', state.settings.tourneyName);
+    return url.toString();
+  }
+
+  function copyRegLink() {
+    const input = document.getElementById('regLinkInput');
+    input.select();
+    navigator.clipboard.writeText(input.value);
+    alert("Registration link copied!");
+  }
+
+  function shareRegLinkWhatsApp() {
+    const link = getShareableRegUrl();
+    const msg = `🏏 *${state.settings.tourneyName}* - Player Registration\n\nRegister yourself using this link:\n${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  function openSelfRegPreview() {
+    document.getElementById('selfRegTourneyTitle').innerText = state.settings.tourneyName;
+    document.getElementById('selfRegModal').classList.add('open');
+  }
+
+  function closeSelfReg() {
+    document.getElementById('selfRegModal').classList.remove('open');
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('register')) {
+      url.searchParams.delete('register');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }
+
+  async function submitSelfReg(mode) {
+    const name = document.getElementById('srName').value.trim();
+    const role = document.getElementById('srRole').value;
+    const mobile = document.getElementById('srMobile').value.trim();
+    if (!name) return alert("Please enter your name!");
+    const photoFile = document.getElementById('srPhoto').files[0];
+    const photo = await compressImage(photoFile, 120);
+
+    if (mode === 'local') {
+      state.players.push({
+        id: 'p_' + Date.now(),
+        name, role, basePrice: 5000, mobile, photo,
+        status: 'available', soldTo: null, soldPrice: 0
+      });
+      saveState();
+      renderAll();
+      alert("Registered successfully!");
+      closeSelfReg();
+    } else {
+      const payload = btoa(unescape(encodeURIComponent(JSON.stringify({ n: name, r: role, m: mobile }))));
+      const text = `🏏 *Player Registration - ${state.settings.tourneyName}*\nName: ${name}\nRole: ${role}\nMobile: ${mobile}\n\n*Admin Import Code:*\nREG:${payload}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  }
+
+  function importPlayerCode() {
+    const raw = document.getElementById('importCodeInput').value.trim();
+    const match = raw.match(/REG:([A-Za-z0-9+/=]+)/);
+    if (!match) return alert("Invalid registration code. Paste the full WhatsApp message containing REG:...");
+    try {
+      const data = JSON.parse(decodeURIComponent(escape(atob(match[1]))));
+      state.players.push({
+        id: 'p_' + Date.now(),
+        name: data.n,
+        role: data.r || 'All-Rounder',
+        basePrice: 5000,
+        mobile: data.m || '',
+        photo: '',
+        status: 'available',
+        soldTo: null,
+        soldPrice: 0
+      });
+      document.getElementById('importCodeInput').value = '';
+      saveState();
+      renderAll();
+      alert(`Player "${data.n}" imported successfully!`);
+    } catch (e) {
+      alert("Could not read code. Please check and try again.");
+    }
+  }
+
+  // ==================== TEAMS & ICON PLAYERS ====================
+  function openEditTeam(teamId) {
+    activeTeamIdForModal = teamId;
+    const team = state.teams.find(t => t.id === teamId);
+    document.getElementById('editTeamNameInput').value = team.name;
+    document.getElementById('editTeamPhoneInput').value = team.ownerPhone || '';
+    document.getElementById('editTeamLogoInput').value = '';
+    document.getElementById('editTeamModal').classList.add('open');
+  }
+
+  async function saveTeamEdit() {
+    const team = state.teams.find(t => t.id === activeTeamIdForModal);
+    team.name = document.getElementById('editTeamNameInput').value.trim() || team.name;
+    team.ownerPhone = document.getElementById('editTeamPhoneInput').value.trim().replace(/\D/g, '');
+    const logoFile = document.getElementById('editTeamLogoInput').files[0];
+    if (logoFile) {
+      team.logo = await compressImage(logoFile, 120);
+    }
+    saveState();
+    closeModal('editTeamModal');
+    renderAll();
+  }
+
+  function openIconModal(teamId) {
+    activeTeamIdForModal = teamId;
+    const team = state.teams.find(t => t.id === teamId);
+    const stats = getTeamStats(teamId);
+    if (stats.count >= state.settings.maxPlayers) {
+      return alert("Team has already reached maximum players limit!");
+    }
+    document.getElementById('iconModalTeamName').innerText = `Team: ${team.name} (Available Purse: ${formatPts(stats.remaining)})`;
+    
+    // Populate available players dropdown
+    const select = document.getElementById('iconExistingSelect');
+    select.innerHTML = '<option value="">-- Add New Icon Player --</option>';
+    state.players.filter(p => p.status === 'available').forEach(p => {
+      select.innerHTML += `<option value="${p.id}">${p.name} (${p.role})</option>`;
+    });
+
+    document.getElementById('iconNewName').value = '';
+    document.getElementById('iconPointsInput').value = '';
+    toggleNewIconFields();
+    document.getElementById('iconModal').classList.add('open');
+  }
+
+  function toggleNewIconFields() {
+    const val = document.getElementById('iconExistingSelect').value;
+    document.getElementById('newIconFields').style.display = val ? 'none' : 'block';
+  }
+
+  async function confirmIconPlayer() {
+    const existingId = document.getElementById('iconExistingSelect').value;
+    const pts = parseInt(document.getElementById('iconPointsInput').value);
+    if (isNaN(pts) || pts < 0) return alert("Please enter valid Icon Player points to deduct!");
+
+    const stats = getTeamStats(activeTeamIdForModal);
+    if (pts > stats.remaining) return alert("Not enough purse balance in this team!");
+
+    if (existingId) {
+      const p = state.players.find(x => x.id === existingId);
+      p.status = 'icon';
+      p.soldTo = activeTeamIdForModal;
+      p.soldPrice = pts;
+      if (state.currentAuction.playerId === existingId) {
+        state.currentAuction = { playerId: null, currentBid: 0, highestBidderId: null };
+      }
+    } else {
+      const name = document.getElementById('iconNewName').value.trim();
+      if (!name) return alert("Enter Icon Player name!");
+      const role = document.getElementById('iconNewRole').value;
+      const photoFile = document.getElementById('iconNewPhoto').files[0];
+      const photo = await compressImage(photoFile);
+
+      state.players.push({
+        id: 'p_' + Date.now(),
+        name, role, basePrice: pts, mobile: '', photo,
+        status: 'icon',
+        soldTo: activeTeamIdForModal,
+        soldPrice: pts
+      });
+    }
+
+    saveState();
+    closeModal('iconModal');
+    renderAll();
+  }
+
+  function shareTeamWhatsApp(teamId) {
+    const team = state.teams.find(t => t.id === teamId);
+    const stats = getTeamStats(teamId);
+    let msg = `🏆 *${state.settings.tourneyName}*\n🛡️ *Team: ${team.name}*\n`;
+    msg += `💰 Remaining Purse: ${formatPts(stats.remaining)} / ${formatPts(state.settings.budget)}\n`;
+    msg += `👥 Squad (${stats.count}/${state.settings.maxPlayers}):\n\n`;
+
+    if (stats.roster.length === 0) {
+      msg += `_No players bought yet._`;
+    } else {
+      stats.roster.forEach((p, idx) => {
+        const tag = p.status === 'icon' ? ' ⭐[ICON]' : '';
+        msg += `${idx + 1}. ${p.name} (${p.role})${tag} - ${formatPts(p.soldPrice)}\n`;
+      });
+    }
+
+    const phone = team.ownerPhone ? team.ownerPhone : '';
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  // ==================== LIVE AUCTION ENGINE ====================
+  function startTimer() {
+    clearInterval(timerInterval);
+    const maxTime = state.settings.bidTime;
+    if (!maxTime || maxTime <= 0) return; // 0 = Timer OFF
+    timeLeft = maxTime;
+    updateTimerUI();
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      updateTimerUI();
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+      }
+    }, 1000);
+  }
+
+  function updateTimerUI() {
+    const el = document.getElementById('bidTimerDisplay');
+    if (!el) return;
+    el.innerText = `⏱️ ${timeLeft}s`;
+    el.classList.toggle('danger', timeLeft <= 5);
+  }
+
+  function bringNextPlayer(specificId = null) {
+    const available = state.players.filter(p => p.status === 'available');
+    if (available.length === 0) return alert("No remaining players in pool!");
+    const chosen = specificId
+      ? available.find(p => p.id === specificId)
+      : available[Math.floor(Math.random() * available.length)];
+
+    state.currentAuction = {
+      playerId: chosen.id,
+      currentBid: chosen.basePrice,
+      highestBidderId: null
+    };
+    saveState();
+    renderAll();
+    startTimer();
+  }
+
+  function placeBid(teamId) {
+    const p = state.players.find(x => x.id === state.currentAuction.playerId);
+    if (!p) return;
+
+    const stats = getTeamStats(teamId);
+    if (stats.count >= state.settings.maxPlayers) {
+      return alert("This team's squad is already full!");
+    }
+
+    const nextBid = state.currentAuction.highestBidderId === null
+      ? p.basePrice
+      : state.currentAuction.currentBid + state.settings.increment;
+
+    // Reserve minimum base price for remaining mandatory slots
+    const slotsLeftAfterThis = Math.max(0, state.settings.minPlayers - (stats.count + 1));
+    const minReserve = slotsLeftAfterThis * 1000;
+
+    if (nextBid > (stats.remaining - minReserve)) {
+      return alert(`Insufficient purse! Team needs to keep reserve for remaining minimum players.`);
+    }
+
+    state.currentAuction.currentBid = nextBid;
+    state.currentAuction.highestBidderId = teamId;
+    saveState();
+    renderAll();
+    startTimer();
+  }
+
+  function adjustCustomBid(delta) {
+    if (!state.currentAuction.playerId) return;
+    const newVal = Math.max(0, state.currentAuction.currentBid + delta);
+    state.currentAuction.currentBid = newVal;
+    saveState();
+    renderAll();
+  }
+
+  function markSold() {
+    const { playerId, currentBid, highestBidderId } = state.currentAuction;
+    if (!playerId || !highestBidderId) return alert("Select a bidding team first!");
+    const p = state.players.find(x => x.id === playerId);
+    p.status = 'sold';
+    p.soldTo = highestBidderId;
+    p.soldPrice = currentBid;
+
+    clearInterval(timerInterval);
+    state.currentAuction = { playerId: null, currentBid: 0, highestBidderId: null };
+    saveState();
+    renderAll();
+  }
+
+  function markUnsold() {
+    const { playerId } = state.currentAuction;
+    if (!playerId) return;
+    const p = state.players.find(x => x.id === playerId);
+    p.status = 'unsold';
+
+    clearInterval(timerInterval);
+    state.currentAuction = { playerId: null, currentBid: 0, highestBidderId: null };
+    saveState();
+    renderAll();
+  }
+
+  function recallUnsold(playerId) {
+    const p = state.players.find(x => x.id === playerId);
+    if (p) {
+      p.status = 'available';
+      saveState();
+      renderAll();
+    }
+  }
+
+  function recallAllUnsold() {
+    state.players.forEach(p => { if (p.status === 'unsold') p.status = 'available'; });
+    saveState();
+    renderAll();
+  }
+
+  // ==================== RENDER UI ====================
+  function renderAll() {
+    document.getElementById('headerTitle').innerText = state.settings.tourneyName;
+    document.getElementById('headerSub').innerText = `${state.settings.teamCount} Teams • Purse: ${formatPts(state.settings.budget)}`;
+    document.getElementById('regLinkInput').value = getShareableRegUrl();
+
+    // Stats
+    const avail = state.players.filter(p => p.status === 'available');
+    const sold = state.players.filter(p => p.status === 'sold' || p.status === 'icon');
+    const unsold = state.players.filter(p => p.status === 'unsold');
+
+    document.getElementById('statTotal').innerText = state.players.length;
+    document.getElementById('statRemaining').innerText = avail.length;
+    document.getElementById('statSold').innerText = sold.length;
+    document.getElementById('statUnsold').innerText = unsold.length;
+
+    renderAuctionStage(avail);
+    renderUnsoldList(unsold);
+    renderPlayersList();
+    renderTeamsList();
+    loadSettingsForm();
+  }
+
+  function renderAuctionStage(avail) {
+    const stage = document.getElementById('auctionStage');
+    const activePlayer = state.players.find(p => p.id === state.currentAuction.playerId);
+
+    if (!activePlayer) {
+      stage.innerHTML = `
+        <p style="color:var(--muted); margin-bottom:12px;">
+          ${avail.length > 0 ? `${avail.length} players waiting in auction pool` : 'No players available in pool'}
+        </p>
+        <button class="btn btn-primary" onclick="bringNextPlayer()" ${avail.length === 0 ? 'disabled' : ''}>
+          🎲 Bring Random Player to Auction
+        </button>
+        ${avail.length > 0 ? `
+          <div style="margin-top:12px;">
+            <select onchange="if(this.value) bringNextPlayer(this.value)" style="max-width:260px;">
+              <option value="">-- Or Pick Specific Player --</option>
+              ${avail.map(p => `<option value="${p.id}">${p.name} (${p.role})</option>`).join('')}
+            </select>
+          </div>
+        ` : ''}
+      `;
+      return;
+    }
+
+    const highTeam = state.teams.find(t => t.id === state.currentAuction.highestBidderId);
+    const timerHtml = state.settings.bidTime > 0
+      ? `<div id="bidTimerDisplay" class="timer-badge">⏱️ ${timeLeft || state.settings.bidTime}s</div>`
+      : `<div class="timer-badge" style="color:var(--muted); background:rgba(148,163,184,0.1);">⏱️ Timer OFF</div>`;
+
+    const avatarHtml = activePlayer.photo
+      ? `<img src="${activePlayer.photo}" class="avatar avatar-lg" />`
+      : `<div class="avatar avatar-lg">${activePlayer.name.charAt(0)}</div>`;
+
+    stage.innerHTML = `
+      ${timerHtml}
+      ${avatarHtml}
+      <h2 style="font-size:1.35rem;">${activePlayer.name}</h2>
+      <p style="color:var(--muted); font-size:0.85rem;">${activePlayer.role} • Base: ${formatPts(activePlayer.basePrice)}</p>
+
+      <div class="bid-display">${formatPts(state.currentAuction.currentBid)}</div>
+      <p style="font-size:0.88rem; color:${highTeam ? '#34d399' : 'var(--warning)'}; font-weight:600;">
+        ${highTeam ? `Highest Bidder: ${highTeam.name}` : 'Waiting for opening bid...'}
+      </p>
+
+      <div class="bid-increments">
+        <button class="btn btn-outline btn-sm" onclick="adjustCustomBid(-${state.settings.increment})">-${formatPts(state.settings.increment)}</button>
+        <button class="btn btn-outline btn-sm" onclick="adjustCustomBid(${state.settings.increment})">+${formatPts(state.settings.increment)}</button>
+      </div>
+
+      <div class="team-bid-grid">
+        ${state.teams.map(t => {
+          const st = getTeamStats(t.id);
+          const isSelected = state.currentAuction.highestBidderId === t.id;
+          const full = st.count >= state.settings.maxPlayers;
+          return `
+            <button class="team-bid-btn ${isSelected ? 'selected' : ''}" onclick="placeBid('${t.id}')" ${full ? 'disabled' : ''}>
+              <div style="font-weight:700; font-size:0.85rem;">${t.name}</div>
+              <div style="font-size:0.72rem; color:var(--muted);">Purse: ${formatPts(st.remaining)} (${st.count}/${state.settings.maxPlayers})</div>
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-primary btn-block" onclick="markSold()">✅ SOLD</button>
+        <button class="btn btn-danger btn-block" onclick="markUnsold()">❌ UNSOLD</button>
+      </div>
+    `;
+  }
+
+  function renderUnsoldList(unsold) {
+    document.getElementById('unsoldListCount').innerText = unsold.length;
+    const box = document.getElementById('unsoldPlayersList');
+    if (unsold.length === 0) {
+      box.innerHTML = `<p style="font-size:0.8rem; color:var(--muted);">No unsold players.</p>`;
+      return;
+    }
+    box.innerHTML = unsold.map(p => `
+      <div class="list-item">
+        <div class="item-info">
+          <h4>${p.name}</h4>
+          <p>${p.role} • Base: ${formatPts(p.basePrice)}</p>
+        </div>
+        <button class="btn btn-warning btn-sm" onclick="recallUnsold('${p.id}')">Bring Back</button>
+      </div>
+    `).join('');
+  }
+
+  function renderPlayersList() {
+    document.getElementById('allPlayersCount').innerText = state.players.length;
+    const box = document.getElementById('allPlayersList');
+    if (state.players.length === 0) {
+      box.innerHTML = `<p style="font-size:0.8rem; color:var(--muted);">No players registered yet.</p>`;
+      return;
+    }
+    box.innerHTML = state.players.map(p => {
+      const team = state.teams.find(t => t.id === p.soldTo);
+      let badge = `<span class="pill pill-avail">Available</span>`;
+      if (p.status === 'sold') badge = `<span class="pill pill-sold">Sold: ${team?.name} (${formatPts(p.soldPrice)})</span>`;
+      if (p.status === 'icon') badge = `<span class="pill pill-icon">Icon: ${team?.name} (${formatPts(p.soldPrice)})</span>`;
+      if (p.status === 'unsold') badge = `<span class="pill pill-unsold">Unsold</span>`;
+
+      const avatar = p.photo
+        ? `<img src="${p.photo}" class="avatar" />`
+        : `<div class="avatar">${p.name.charAt(0)}</div>`;
+
+      return `
+        <div class="list-item">
+          ${avatar}
+          <div class="item-info">
+            <h4>${p.name} ${badge}</h4>
+            <p>${p.role} • Base: ${formatPts(p.basePrice)} ${p.mobile ? '• ' + p.mobile : ''}</p>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deletePlayer('${p.id}')">🗑️</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderTeamsList() {
+    const container = document.getElementById('teamsContainer');
+    container.innerHTML = state.teams.map(t => {
+      const st = getTeamStats(t.id);
+      const logoHtml = t.logo
+        ? `<img src="${t.logo}" class="avatar" />`
+        : `<div class="avatar">${t.name.charAt(0)}</div>`;
+
+      return `
+        <div class="card">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            ${logoHtml}
+            <div style="flex:1;">
+              <h3 style="font-size:1.05rem;">${t.name}</h3>
+              <p style="font-size:0.78rem; color:var(--primary);">
+                Purse Left: <strong>${formatPts(st.remaining)}</strong> / ${formatPts(state.settings.budget)}
+              </p>
+              <p style="font-size:0.74rem; color:var(--muted);">
+                Players: ${st.count} (Min: ${state.settings.minPlayers}, Max: ${state.settings.maxPlayers})
+              </p>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+            <button class="btn btn-outline btn-sm" onclick="openEditTeam('${t.id}')">✏️ Edit Name/Logo</button>
+            <button class="btn btn-warning btn-sm" onclick="openIconModal('${t.id}')">⭐ + Icon Player</button>
+            <button class="btn btn-primary btn-sm" onclick="shareTeamWhatsApp('${t.id}')">📲 Share on WhatsApp</button>
+          </div>
+
+          <div style="background:var(--bg); border-radius:8px; padding:8px 10px;">
+            <strong style="font-size:0.78rem; color:var(--muted);">Squad Roster:</strong>
+            ${st.roster.length === 0 ? `<p style="font-size:0.78rem; color:var(--muted); margin-top:4px;">No players yet.</p>` : ''}
+            ${st.roster.map((p, idx) => `
+              <div style="display:flex; justify-content:space-between; font-size:0.82rem; padding:4px 0; border-bottom:1px solid var(--border);">
+                <span>${idx + 1}. ${p.name} ${p.status === 'icon' ? '⭐' : ''} <small style="color:var(--muted);">(${p.role})</small></span>
+                <span style="color:#34d399; font-weight:600;">${formatPts(p.soldPrice)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function resetAllData() {
+    if (!confirm("Reset entire tournament, teams, and players?")) return;
+    localStorage.removeItem('ecricket_auction_v1');
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    initTeamsIfNeeded();
+    renderAll();
+  }
+
+  // ==================== INIT ON LOAD ====================
+  initTeamsIfNeeded();
+  renderAll();
+
+  // Auto-open self-registration modal if URL has ?register=1
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('register') === '1') {
+    const tName = urlParams.get('t');
+    document.getElementById('selfRegTourneyTitle').innerText = tName || state.settings.tourneyName;
+    document.getElementById('selfRegModal').classList.add('open');
+  }
+</script>
+</body>
+</html>
